@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 import random
 import numpy as np
 import time
+import argparse
 
 # Import training data
 from data import TRAINING_DATA
@@ -230,6 +231,15 @@ def predict_intent(sentence, model, word_to_index, max_len, index_to_intent):
 # ============================================================================
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='PyTorch Intent Classifier - Agentic Router')
+    parser.add_argument(
+        '--input',
+        type=str,
+        help='Custom sentence to classify (e.g., --input "what is the weather")'
+    )
+    args = parser.parse_args()
+    
     print("=" * 70)
     print("PyTorch Intent Classifier - Agentic Router")
     print("=" * 70)
@@ -312,70 +322,104 @@ if __name__ == "__main__":
     
     print("\nTraining complete!")
     
-    # Demonstration with test sentences
+    # Demonstration with test sentences or custom input
     print(f"\n{'=' * 70}")
-    print("INFERENCE DEMONSTRATION - Agentic Routing")
-    print("=" * 70)
     
-    test_sentences = [
-        "hi",
-        "greetings",
-        "what's the temperature",
-        "how is the weather today",
-        "I need a place to stay",
-        "book me a ticket",
-        "thanks",
-        "appreciate it",
-        "current time",
-        "goodbye",
-        "see ya",
-        "what is the weather forecast",
-        "random query that makes no sense xyz",
-    ]
-    
-    print(f"\nConfidence Threshold: {CONFIDENCE_THRESHOLD}")
-    print(f"  > {CONFIDENCE_THRESHOLD}: Fast Path (Execute Tool)")
-    print(f"  ≤ {CONFIDENCE_THRESHOLD}: Costly Path (Fallback to General LLM)\n")
-    
-    total_latency = 0
-    
-    for sentence in test_sentences:
-        # Measure inference latency
+    # Check if custom input provided
+    if args.input:
+        print("CUSTOM INPUT CLASSIFICATION")
+        print("=" * 70)
+        
+        # Classify the custom input
         start_time = time.time()
         intent, confidence = predict_intent(
-            sentence, model, word_to_index, max_seq_len, index_to_intent
+            args.input, model, word_to_index, max_seq_len, index_to_intent
         )
         end_time = time.time()
         
-        latency_ms = (end_time - start_time) * 1000  # Convert to milliseconds
-        total_latency += latency_ms
+        latency_ms = (end_time - start_time) * 1000
         
-        print("-" * 70)
-        print(f"Input: \"{sentence}\"")
+        print(f"\nInput: \"{args.input}\"")
         print(f"Predicted Intent: {intent}")
         print(f"Confidence: {confidence:.4f}")
         print(f"Latency: {latency_ms:.2f} ms")
+        print(f"\nConfidence Threshold: {CONFIDENCE_THRESHOLD}")
         
         # Agentic routing decision
         if confidence > CONFIDENCE_THRESHOLD:
-            print(f"✓ FAST PATH: Executing tool: {intent}")
+            print(f"\n✓ FAST PATH: Executing tool: {intent}")
+            print(f"  Action: Route to {intent} service")
         else:
-            print(f"⚠ COSTLY PATH: Intent too vague, Fallback to General LLM")
+            print(f"\n⚠ COSTLY PATH: Intent too vague, Fallback to General LLM")
+            print(f"  Action: Route to general-purpose LLM for handling")
+        
+        print("\n" + "=" * 70)
     
-    print("=" * 70)
+    else:
+        # Run full demo with test sentences
+        print("INFERENCE DEMONSTRATION - Agentic Routing")
+        print("=" * 70)
+        
+        test_sentences = [
+            "hi",
+            "greetings",
+            "what's the temperature",
+            "how is the weather today",
+            "I need a place to stay",
+            "book me a ticket",
+            "thanks",
+            "appreciate it",
+            "current time",
+            "goodbye",
+            "see ya",
+            "what is the weather forecast",
+            "random query that makes no sense xyz",
+        ]
+        
+        print(f"\nConfidence Threshold: {CONFIDENCE_THRESHOLD}")
+        print(f"  > {CONFIDENCE_THRESHOLD}: Fast Path (Execute Tool)")
+        print(f"  ≤ {CONFIDENCE_THRESHOLD}: Costly Path (Fallback to General LLM)\n")
+        
+        total_latency = 0
+        
+        for sentence in test_sentences:
+            # Measure inference latency
+            start_time = time.time()
+            intent, confidence = predict_intent(
+                sentence, model, word_to_index, max_seq_len, index_to_intent
+            )
+            end_time = time.time()
+            
+            latency_ms = (end_time - start_time) * 1000  # Convert to milliseconds
+            total_latency += latency_ms
+            
+            print("-" * 70)
+            print(f"Input: \"{sentence}\"")
+            print(f"Predicted Intent: {intent}")
+            print(f"Confidence: {confidence:.4f}")
+            print(f"Latency: {latency_ms:.2f} ms")
+            
+            # Agentic routing decision
+            if confidence > CONFIDENCE_THRESHOLD:
+                print(f"✓ FAST PATH: Executing tool: {intent}")
+            else:
+                print(f"⚠ COSTLY PATH: Intent too vague, Fallback to General LLM")
+        
+        print("=" * 70)
+        
+        # Latency summary
+        avg_latency = total_latency / len(test_sentences)
+        print(f"\nLatency Summary:")
+        print(f"  Total Inference Time: {total_latency:.2f} ms")
+        print(f"  Average Latency per Query: {avg_latency:.2f} ms")
+        print(f"  Queries Processed: {len(test_sentences)}")
+        print(f"\nComparison:")
+        print(f"  Intent Classifier: ~{avg_latency:.1f} ms")
+        print(f"  Typical LLM API Call: ~1000-2000 ms")
+        print(f"  Speed Improvement: ~{1500/avg_latency:.1f}x faster")
+        
+        print("=" * 70)
     
-    # Latency summary
-    avg_latency = total_latency / len(test_sentences)
-    print(f"\nLatency Summary:")
-    print(f"  Total Inference Time: {total_latency:.2f} ms")
-    print(f"  Average Latency per Query: {avg_latency:.2f} ms")
-    print(f"  Queries Processed: {len(test_sentences)}")
-    print(f"\nComparison:")
-    print(f"  Intent Classifier: ~{avg_latency:.1f} ms")
-    print(f"  Typical LLM API Call: ~1000-2000 ms")
-    print(f"  Speed Improvement: ~{1500/avg_latency:.1f}x faster")
-    
-    print("=" * 70)
     print("Demo complete!")
     print("=" * 70)
 
