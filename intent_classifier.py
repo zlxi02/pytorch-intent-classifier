@@ -10,64 +10,13 @@ from torch.utils.data import Dataset, DataLoader
 import random
 import numpy as np
 
+# Import training data
+from data import TRAINING_DATA
+
 # Set random seeds for reproducibility
 torch.manual_seed(42)
 random.seed(42)
 np.random.seed(42)
-
-# ============================================================================
-# DATA - Embedded Training Examples
-# ============================================================================
-
-DATA = [
-    # Greeting (more variations)
-    ("Hi there", "Greeting"),
-    ("Hello, how are you", "Greeting"),
-    ("hey", "Greeting"),
-    ("greetings", "Greeting"),
-    ("good morning", "Greeting"),
-    ("hi", "Greeting"),
-    
-    # GetWeather (more variations)
-    ("what is the weather like in London", "GetWeather"),
-    ("check the forecast for Paris", "GetWeather"),
-    ("how is the weather today", "GetWeather"),
-    ("what is the temperature", "GetWeather"),
-    ("weather forecast please", "GetWeather"),
-    ("is it going to rain", "GetWeather"),
-    
-    # BookFlight (more variations)
-    ("I need to book a flight", "BookFlight"),
-    ("can you reserve me a ticket to Rome", "BookFlight"),
-    ("book me a ticket", "BookFlight"),
-    ("I want to fly to Paris", "BookFlight"),
-    ("reserve a flight", "BookFlight"),
-    ("need a plane ticket", "BookFlight"),
-    
-    # Thanking (more variations)
-    ("Thank you very much", "Thanking"),
-    ("thanks for the help", "Thanking"),
-    ("thanks", "Thanking"),
-    ("appreciate it", "Thanking"),
-    ("thank you", "Thanking"),
-    ("much appreciated", "Thanking"),
-    
-    # GetTime (more variations)
-    ("what time is it", "GetTime"),
-    ("current time please", "GetTime"),
-    ("tell me the time", "GetTime"),
-    ("what is the time", "GetTime"),
-    ("time please", "GetTime"),
-    ("current time", "GetTime"),
-    
-    # Farewell (more variations)
-    ("bye bye", "Farewell"),
-    ("see you later", "Farewell"),
-    ("goodbye", "Farewell"),
-    ("see ya", "Farewell"),
-    ("catch you later", "Farewell"),
-    ("bye", "Farewell")
-]
 
 # ============================================================================
 # PREPROCESSING FUNCTIONS
@@ -301,11 +250,11 @@ if __name__ == "__main__":
     print(f"  Confidence Threshold: {CONFIDENCE_THRESHOLD}")
     
     # Build vocabulary
-    print(f"\nBuilding vocabulary from {len(DATA)} training examples...")
-    word_to_index, intent_to_index, vocab_size, num_classes = build_vocab(DATA)
+    print(f"\nBuilding vocabulary from {len(TRAINING_DATA)} training examples...")
+    word_to_index, intent_to_index, vocab_size, num_classes = build_vocab(TRAINING_DATA)
     
     # Calculate max sequence length
-    max_seq_len = max(len(text.split()) for text, _ in DATA)
+    max_seq_len = max(len(text.split()) for text, _ in TRAINING_DATA)
     
     print(f"  Vocabulary Size: {vocab_size}")
     print(f"  Number of Classes: {num_classes}")
@@ -316,7 +265,7 @@ if __name__ == "__main__":
     index_to_intent = {v: k for k, v in intent_to_index.items()}
     
     # Create dataset and dataloader
-    dataset = IntentDataset(DATA, word_to_index, intent_to_index, max_seq_len)
+    dataset = IntentDataset(TRAINING_DATA, word_to_index, intent_to_index, max_seq_len)
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
     
     # Initialize model, loss, optimizer
