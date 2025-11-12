@@ -422,4 +422,59 @@ if __name__ == "__main__":
     
     print("Demo complete!")
     print("=" * 70)
+    
+    # Interactive mode - accept additional custom inputs
+    print("\n" + "=" * 70)
+    print("INTERACTIVE MODE")
+    print("=" * 70)
+    print("\nYou can now enter custom sentences for classification.")
+    print("Type 'quit' or 'exit' to end the session.\n")
+    
+    while True:
+        try:
+            # Get user input
+            user_input = input("Enter a sentence: ").strip()
+            
+            # Check for exit commands
+            if user_input.lower() in ['quit', 'exit', 'q']:
+                print("\nExiting interactive mode. Goodbye!")
+                break
+            
+            # Skip empty inputs
+            if not user_input:
+                continue
+            
+            # Classify the input
+            start_time = time.time()
+            intent, confidence = predict_intent(
+                user_input, model, word_to_index, max_seq_len, index_to_intent
+            )
+            end_time = time.time()
+            
+            latency_ms = (end_time - start_time) * 1000
+            
+            # Display results
+            print("\n" + "-" * 70)
+            print(f"Input: \"{user_input}\"")
+            print(f"Predicted Intent: {intent}")
+            print(f"Confidence: {confidence:.4f}")
+            print(f"Latency: {latency_ms:.2f} ms")
+            
+            # Routing decision
+            if confidence > CONFIDENCE_THRESHOLD:
+                print(f"✓ FAST PATH: Executing tool: {intent}")
+            else:
+                print(f"⚠ COSTLY PATH: Intent too vague, Fallback to General LLM")
+            print("-" * 70 + "\n")
+            
+        except KeyboardInterrupt:
+            print("\n\nInterrupted. Exiting interactive mode. Goodbye!")
+            break
+        except EOFError:
+            print("\n\nEnd of input. Exiting interactive mode. Goodbye!")
+            break
+    
+    print("\n" + "=" * 70)
+    print("Session complete!")
+    print("=" * 70)
 
