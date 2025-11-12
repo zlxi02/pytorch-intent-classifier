@@ -9,6 +9,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import random
 import numpy as np
+import time
 
 # Import training data
 from data import TRAINING_DATA
@@ -336,21 +337,43 @@ if __name__ == "__main__":
     print(f"  > {CONFIDENCE_THRESHOLD}: Fast Path (Execute Tool)")
     print(f"  ≤ {CONFIDENCE_THRESHOLD}: Costly Path (Fallback to General LLM)\n")
     
+    total_latency = 0
+    
     for sentence in test_sentences:
+        # Measure inference latency
+        start_time = time.time()
         intent, confidence = predict_intent(
             sentence, model, word_to_index, max_seq_len, index_to_intent
         )
+        end_time = time.time()
+        
+        latency_ms = (end_time - start_time) * 1000  # Convert to milliseconds
+        total_latency += latency_ms
         
         print("-" * 70)
         print(f"Input: \"{sentence}\"")
         print(f"Predicted Intent: {intent}")
         print(f"Confidence: {confidence:.4f}")
+        print(f"Latency: {latency_ms:.2f} ms")
         
         # Agentic routing decision
         if confidence > CONFIDENCE_THRESHOLD:
             print(f"✓ FAST PATH: Executing tool: {intent}")
         else:
             print(f"⚠ COSTLY PATH: Intent too vague, Fallback to General LLM")
+    
+    print("=" * 70)
+    
+    # Latency summary
+    avg_latency = total_latency / len(test_sentences)
+    print(f"\nLatency Summary:")
+    print(f"  Total Inference Time: {total_latency:.2f} ms")
+    print(f"  Average Latency per Query: {avg_latency:.2f} ms")
+    print(f"  Queries Processed: {len(test_sentences)}")
+    print(f"\nComparison:")
+    print(f"  Intent Classifier: ~{avg_latency:.1f} ms")
+    print(f"  Typical LLM API Call: ~1000-2000 ms")
+    print(f"  Speed Improvement: ~{1500/avg_latency:.1f}x faster")
     
     print("=" * 70)
     print("Demo complete!")
